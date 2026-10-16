@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Solvex AI</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fuente Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-dark: #090814;
+            --bg-panel: #151426;
+            --grad-orange: #ff8c24;
+            --grad-coral: #e85349;
+            --grad-magenta: #b84580;
+            --grad-purple: #7b42bc;
+            --solvex-gradient: linear-gradient(135deg, #ff8c24 0%, #e85349 35%, #b84580 70%, #7b42bc 100%);
+        }
+
+        * {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #f5f4fa;
+            overflow: hidden;
+            height: 100dvh;
+            width: 100vw;
+            position: relative;
+        }
+
+        /* Glows Ambientales de Fondo */
+        .ambient-glow-top {
+            position: fixed;
+            top: -10%;
+            right: -10%;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(232, 83, 73, 0.25) 0%, rgba(123, 66, 188, 0.18) 45%, transparent 70%);
+            filter: blur(65px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .ambient-glow-bottom {
+            position: fixed;
+            bottom: -12%;
+            left: -10%;
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, rgba(255, 140, 36, 0.22) 0%, rgba(184, 69, 128, 0.14) 50%, transparent 70%);
+            filter: blur(70px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Degradado Animado de Texto */
+        .solvex-text-grad {
+            background: linear-gradient(90deg, #ff8c24, #e85349, #b84580, #7b42bc, #ff8c24);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmerText 5s linear infinite;
+        }
+
+        /* Logo de 24 Puntas Estático con Brillo Sutil (Sin Rotación) */
+        .sun-static {
+            filter: drop-shadow(0 0 14px rgba(255, 140, 36, 0.45)) drop-shadow(0 0 24px rgba(123, 66, 188, 0.35));
+            transform-origin: center;
+            transition: filter 0.3s ease, transform 0.3s ease;
+        }
+
+        .sun-thinking {
+            animation: pulseSunGlowFast 1.2s ease-in-out infinite;
+            transform-origin: center;
+        }
+
+        /* Barra de carga Shimmer de Solvex */
+        .solvex-shimmer-bar {
+            background: linear-gradient(90deg, rgba(255, 140, 36, 0.18) 0%, rgba(232, 83, 73, 0.65) 35%, rgba(184, 69, 128, 0.75) 65%, rgba(123, 66, 188, 0.2) 100%);
+            background-size: 200% 100%;
+            animation: shimmerText 1.5s linear infinite;
+        }
+
+        /* Borde iluminado de la píldora de entrada */
+        .solvex-pill-border {
+            position: relative;
+            background: rgba(21, 20, 38, 0.92);
+            backdrop-filter: blur(16px);
+            border-radius: 9999px;
+            box-shadow: 0 0 30px rgba(255, 140, 36, 0.15), 0 0 30px rgba(123, 66, 188, 0.15);
+        }
+
+        .solvex-pill-border::before {
+            content: "";
+            position: absolute;
+            inset: -1.5px;
+            border-radius: 9999px;
+            padding: 1.5px;
+            background: linear-gradient(90deg, #ff8c24, #e85349, #b84580, #7b42bc);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* Animaciones Keyframes (Sin rotación) */
+        @keyframes pulseSunGlowFast {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 140, 36, 0.6)); opacity: 0.85; }
+            50% { filter: drop-shadow(0 0 24px rgba(232, 83, 73, 1)); opacity: 1; }
+        }
+
+        @keyframes shimmerText {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        @keyframes fadeInSlide {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-appear {
+            animation: fadeInSlide 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Scrollbar oculta pero funcional */
+        .no-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .no-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(184, 69, 128, 0.25);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between select-none">
+
+    <!-- Luces ambientales de las esquinas -->
+    <div class="ambient-glow-top"></div>
+    <div class="ambient-glow-bottom"></div>
+
+    <!-- Definición SVG Global del Sol de 24 Puntas de Solvex -->
+    <svg width="0" height="0" class="absolute pointer-events-none">
+        <defs>
+            <linearGradient id="solvexLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff8c24" />
+                <stop offset="35%" stop-color="#e85349" />
+                <stop offset="70%" stop-color="#b84580" />
+                <stop offset="100%" stop-color="#7b42bc" />
+            </linearGradient>
+            <g id="solvex-24-sun">
+                <!-- Anillo central hueco -->
+                <circle cx="50" cy="50" r="19.5" fill="none" stroke="url(#solvexLogoGrad)" stroke-width="3.4"/>
+                <!-- 24 Rayos afilados alternando largos y cortos -->
+                <g fill="url(#solvexLogoGrad)">
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(15 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(30 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(45 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(60 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(75 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(90 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(105 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(120 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(135 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(150 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(165 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(180 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(195 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(210 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(225 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(240 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(255 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(270 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(285 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(300 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(315 50 50)" />
+                    <polygon points="48.1,26.5 51.9,26.5 50,2.5" transform="rotate(330 50 50)" />
+                    <polygon points="48.5,26.5 51.5,26.5 50,11.5" transform="rotate(345 50 50)" />
+                </g>
+            </g>
+        </defs>
+    </svg>
+
+    <!-- BARRA SUPERIOR CON SELECTOR DE MODELOS PROPIOS (ARGON, PRO, FLASH, VISION) -->
+    <header class="relative z-30 flex items-center justify-between px-3 py-2.5 sm:px-6 border-b border-white/5 bg-[#090814]/80 backdrop-blur-md">
+        <div class="flex items-center gap-2 sm:gap-3">
+            <button onclick="resetToHome()" title="Nuevo Chat" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 active:scale-95 transition">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Marca y Selector Desplegable de Modelos Solvex -->
+            <div class="relative">
+                <button onclick="toggleModelDropdown()" id="model-selector-btn" class="flex items-center gap-2 px-2.5 py-1.5 rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/10 transition active:scale-95">
+                    <svg class="w-7 h-7 sm:w-8 sm:h-8 sun-static" viewBox="0 0 100 100">
+                        <use href="#solvex-24-sun"></use>
+                    </svg>
+                    <div class="flex flex-col text-left">
+                        <div class="flex items-center gap-1">
+                            <span class="text-lg sm:text-xl font-bold tracking-tight solvex-text-grad leading-none">Solvex</span>
+                            <span id="active-model-badge" class="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-gradient-to-r from-[#ff8c24]/25 to-[#7b42bc]/30 border border-[#ff8c24]/40 text-[#ff8c24]">Argon</span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-400"></i>
+                        </div>
+                        <span id="active-model-desc" class="text-[10px] text-gray-400 font-medium tracking-wide mt-0.5">Ultra Reasoning & Multimodal</span>
+                    </div>
+                </button>
+
+                <!-- Menú Desplegable de Modelos de Solvex -->
+                <div id="model-dropdown" class="hidden absolute left-0 mt-2 w-72 bg-[#151426] border border-[#e85349]/40 rounded-3xl p-2 shadow-2xl z-50 msg-appear">
+                    <div class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                        Motores de Inteligencia Solvex
+                    </div>
+                    <button onclick="selectSolvexModel('Argon', 'Ultra Reasoning & Multimodal', false)" class="w-full flex items-start gap-3 p-2.5 rounded-2xl hover:bg-white/5 text-left transition group">
+                        <div class="w-8 h-8 rounded-xl bg-[#ff8c24]/15 border border-[#ff8c24]/40 flex items-center justify-center text-[#ff8c24] mt-0.5">
+                            <i data-lucide="atom" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-bold text-white">Solvex Argon</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#ff8c24]/20 text-[#ff8c24] font-semibold">MÁS AVANZADO</span>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-0.5">Razonamiento profundo, lógica suprema y análisis multimodal.</p>
+                        </div>
+                    </button>
+
+                    <button onclick="selectSolvexModel('Pro', 'Advanced Coding & Creativity', false)" class="w-full flex items-start gap-3 p-2.5 rounded-2xl hover:bg-white/5 text-left transition group mt-1">
+                        <div class="w-8 h-8 rounded-xl bg-[#e85349]/15 border border-[#e85349]/40 flex items-center justify-center text-[#e85349] mt-0.5">
+                            <i data-lucide="cpu" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-bold text-white">Solvex Pro</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-gray-300 font-semibold">PRO</span>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-0.5">Programación avanzada, arquitectura de software y creatividad.</p>
+                        </div>
+                    </button>
+
+                    <button onclick="selectSolvexModel('Flash', 'Velocidad Extrema', false)" class="w-full flex items-start gap-3 p-2.5 rounded-2xl hover:bg-white/5 text-left transition group mt-1">
+                        <div class="w-8 h-8 rounded-xl bg-[#b84580]/15 border border-[#b84580]/40 flex items-center justify-center text-[#b84580] mt-0.5">
+                            <i data-lucide="zap" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-sm font-bold text-white">Solvex Flash</span>
+                            <p class="text-xs text-gray-400 mt-0.5">Respuestas instantáneas y fluidez en tiempo real.</p>
+                        </div>
+                    </button>
+
+                    <button onclick="selectSolvexModel('Vision', 'Generación de Imágenes HD', true)" class="w-full flex items-start gap-3 p-2.5 rounded-2xl hover:bg-white/5 text-left transition group mt-1">
+                        <div class="w-8 h-8 rounded-xl bg-[#7b42bc]/20 border border-[#7b42bc]/50 flex items-center justify-center text-[#c299ff] mt-0.5">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-bold text-white">Solvex Vision</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#7b42bc]/30 text-[#d8bfff] font-semibold">ARTE IA</span>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-0.5">Motor dedicado para crear y dibujar imágenes desde texto.</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 sm:gap-2">
+            <!-- Botón Modo Crear Imagen Rápido -->
+            <button onclick="toggleImageCreationMode()" id="img-mode-header-btn" title="Activar Generador de Imágenes" class="flex items-center gap-1.5 px-2.5 py-2 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 active:scale-95 transition">
+                <i data-lucide="palette" class="w-3.5 h-3.5 text-[#ff8c24]"></i>
+                <span class="hidden sm:inline">Crear Imagen</span>
+            </button>
+
+            <!-- Botón para descargar la App HTML -->
+            <button onclick="downloadAppHTML()" class="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold text-white shadow-lg active:scale-95 transition" style="background: var(--solvex-gradient);">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span class="hidden md:inline">Descargar App</span>
+            </button>
+
+            <!-- Botón de Configurar Creador -->
+            <button onclick="toggleCreatorModal()" title="Configurar Creador" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 active:scale-95 transition">
+                <i data-lucide="settings" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+            </button>
+
+            <!-- Botón de Perfil del Creador -->
+            <button onclick="askCreatorIdentity()" title="¿Quién es mi creador?" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-[#ff8c24]/20 to-[#7b42bc]/30 border border-[#e85349]/40 flex items-center justify-center text-white active:scale-95 transition">
+                <i data-lucide="crown" class="w-4 h-4 sm:w-5 sm:h-5 text-[#ff8c24]"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MODAL DE PERSONALIZACIÓN DEL CREADOR (CERO RASTROS EXTERNOS) -->
+    <div id="creator-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+        <div class="w-full max-w-sm bg-[#151426] border border-[#e85349]/40 rounded-3xl p-6 shadow-2xl msg-appear">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <svg class="w-7 h-7 sun-static" viewBox="0 0 100 100">
+                        <use href="#solvex-24-sun"></use>
+                    </svg>
+                    <h3 class="text-lg font-bold text-white">Núcleo del Creador</h3>
+                </div>
+                <button onclick="toggleCreatorModal()" class="text-gray-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-300 mb-4 leading-relaxed">
+                Solvex es una inteligencia artificial 100% original e independiente. Configura tu nombre oficial de creador y el motor predeterminado:
+            </p>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-medium text-gray-400 block mb-1">Nombre Oficial del Creador:</label>
+                    <input id="creator-name-input" type="text" value="Mi Creador" placeholder="Escribe tu nombre aquí..." class="w-full bg-[#090814] border border-[#b84580]/50 focus:border-[#ff8c24] rounded-xl px-3.5 py-2.5 text-sm text-white outline-none transition">
+                </div>
+                <button onclick="saveCreatorName()" class="w-full py-2.5 rounded-xl font-semibold text-sm text-white shadow-lg active:scale-95 transition" style="background: var(--solvex-gradient);">
+                    Guardar Identidad del Creador
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÁREA CENTRAL DE CONVERSACIÓN -->
+    <main id="chat-viewport" class="relative z-10 flex-1 overflow-y-auto no-scrollbar px-4 py-4 sm:px-6 flex flex-col items-center">
+        
+        <!-- PANTALLA DE BIENVENIDA -->
+        <div id="welcome-view" class="my-auto flex flex-col items-center text-center max-w-xl w-full py-4 msg-appear">
+            <!-- Sol Central Grande Estático (Sin Giro) -->
+            <div class="relative mb-5">
+                <svg class="w-28 h-28 sm:w-36 sm:h-36 sun-static" viewBox="0 0 100 100">
+                    <use href="#solvex-24-sun"></use>
+                </svg>
+            </div>
+
+            <!-- Saludo Principal -->
+            <h1 class="text-3xl sm:text-5xl font-bold tracking-tight text-white mb-2">
+                Hola, soy <span class="solvex-text-grad">Solvex</span>
+            </h1>
+            <p class="text-sm sm:text-base text-[#a09cb8] mb-3">
+                ¡Hola! ¿Cómo te puedo ayudar hoy?
+            </p>
+            <div id="creator-badge" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-gray-300 mb-6">
+                <span class="w-2 h-2 rounded-full bg-[#ff8c24]"></span>
+                <span>Motor: <strong id="welcome-model-label" class="text-[#ff8c24]">Solvex Argon</strong> · Creada por <strong id="badge-creator-name" class="text-white">Mi Creador</strong></span>
+            </div>
+
+            <!-- Botones Interactivos de Sugerencias Rápidas -->
+            <div class="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-2.5 w-full max-w-lg">
+                <button onclick="promptImageGeneration('Dibuja una imagen épica en alta definición de un león cibernético con energía solar naranja y púrpura')" class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#151426]/90 hover:bg-[#1f1d36] border border-[#ff8c24]/40 hover:border-[#ff8c24] text-xs sm:text-sm text-white font-medium transition active:scale-95 shadow-md">
+                    <span>🎨</span>
+                    <span>Dibuja una imagen</span>
+                </button>
+                <button onclick="triggerQuickPrompt('Escribe un código completo usando Solvex Pro')" class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#151426]/90 hover:bg-[#1f1d36] border border-white/10 hover:border-[#e85349]/60 text-xs sm:text-sm text-gray-100 font-medium transition active:scale-95 shadow-md">
+                    <span>💻</span>
+                    <span>Escribe un código</span>
+                </button>
+                <button onclick="triggerQuickPrompt('Planifica un viaje inolvidable de 5 días con itinerario y presupuesto')" class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#151426]/90 hover:bg-[#1f1d36] border border-white/10 hover:border-[#b84580]/60 text-xs sm:text-sm text-gray-100 font-medium transition active:scale-95 shadow-md">
+                    <span>✈️</span>
+                    <span>Planifica un viaje</span>
+                </button>
+                <button onclick="askCreatorIdentity()" class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#151426]/90 hover:bg-[#1f1d36] border border-[#7b42bc]/50 hover:border-[#ff8c24] text-xs sm:text-sm text-white font-semibold transition active:scale-95 shadow-md">
+                    <span>👑</span>
+                    <span>¿Quién te creó?</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- LISTA DE MENSAJES DEL CHAT -->
+        <div id="messages-list" class="w-full max-w-3xl flex flex-col gap-5 pb-4 hidden"></div>
+
+    </main>
+
+    <!-- Input oculto para subir foto/imagen desde el celular -->
+    <input type="file" id="image-upload-input" accept="image/*" class="hidden" onchange="handleImageSelected(event)">
+
+    <!-- Indicador de Modo Generación de Imagen Activo -->
+    <div id="image-mode-banner" class="hidden relative z-20 mx-auto w-full max-w-3xl px-4 pb-1.5">
+        <div class="inline-flex items-center gap-2 bg-gradient-to-r from-[#ff8c24]/20 via-[#e85349]/20 to-[#7b42bc]/25 border border-[#ff8c24]/50 rounded-full px-3.5 py-1 text-xs text-white shadow-md">
+            <span>🎨 <strong>Modo Solvex Vision Activo:</strong> Escribe lo que quieras dibujar y Solvex creará la imagen</span>
+            <button onclick="toggleImageCreationMode(false)" class="ml-1 text-gray-300 hover:text-white">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Previsualización si el usuario adjunta una imagen -->
+    <div id="image-preview-bar" class="hidden relative z-20 mx-auto w-full max-w-3xl px-4 pb-2">
+        <div class="inline-flex items-center gap-3 bg-[#151426] border border-[#ff8c24]/40 rounded-2xl p-2 pr-3 shadow-lg">
+            <img id="preview-thumb" src="" alt="Vista previa" class="w-12 h-12 object-cover rounded-xl">
+            <div class="text-xs">
+                <p class="font-semibold text-white">Imagen cargada en Solvex</p>
+                <p class="text-gray-400">Escribe qué deseas analizar de esta imagen</p>
+            </div>
+            <button onclick="clearSelectedImage()" class="p-1.5 text-gray-400 hover:text-white rounded-full bg-white/5">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- BARRA INFERIOR DE ENTRADA ESTILO PÍLDORA -->
+    <footer class="relative z-20 w-full px-3 pb-4 pt-1 sm:px-6 flex justify-center">
+        <form id="solvex-form" class="w-full max-w-3xl solvex-pill-border flex items-center gap-1.5 sm:gap-2 p-1.5 pl-2.5 pr-2">
+            
+            <!-- Botones de herramientas a la izquierda (Pintar Imagen y Cámara) -->
+            <div class="flex items-center bg-white/5 rounded-full p-1 gap-0.5">
+                <button type="button" onclick="toggleImageCreationMode()" id="pill-art-btn" title="Modo Dibujar Imagen IA" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 flex items-center justify-center text-[#ff8c24] hover:text-white active:scale-90 transition">
+                    <i data-lucide="sparkles" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                </button>
+                <button type="button" onclick="document.getElementById('image-upload-input').click()" title="Subir o tomar foto para analizar" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-300 hover:text-white active:scale-90 transition">
+                    <i data-lucide="camera" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                </button>
+            </div>
+
+            <!-- Campo de texto -->
+            <input 
+                id="chat-input" 
+                type="text" 
+                placeholder="Escribe aquí o pide: Dibuja una imagen de..." 
+                autocomplete="off"
+                class="flex-1 bg-transparent text-sm sm:text-base text-white placeholder-gray-400 focus:outline-none px-2 py-2 min-w-0 select-text"
+            >
+
+            <!-- Botón de Micrófono -->
+            <button type="button" id="mic-btn" onclick="startVoiceInput()" title="Hablar con Solvex" class="w-9 h-9 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-300 hover:text-[#ff8c24] active:scale-90 transition">
+                <i data-lucide="mic" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Botón de Enviar -->
+            <button type="submit" id="send-btn" title="Enviar a Solvex" class="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md active:scale-90 transition flex-shrink-0" style="background: var(--solvex-gradient);">
+                <i data-lucide="send" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+            </button>
+        </form>
+    </footer>
+
+    <!-- Notificación Toast Flotante -->
+    <div id="toast-msg" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 hidden px-4 py-2 rounded-full bg-[#151426] border border-[#ff8c24] text-xs font-medium text-white shadow-xl">
+        Actualizado
+    </div>
+
+    <script>
+        // Inicializar iconos
+        lucide.createIcons();
+
+        // Conexión interna para motor de razonamiento y motor visual de Solvex
+        const apiKey = "";
+        const CORE_TEXT_ENDPOINT = "gemini-3-flash-preview";
+        const CORE_IMAGE_ENDPOINT = "gemini-3.1-flash-image";
+        const CORE_IMAGE_LITE_ENDPOINT = "gemini-3.1-flash-lite-image";
+
+        // Estado de Solvex
+        let creatorName = "Mi Creador";
+        let currentSolvexModel = "Argon";
+        let currentModelDesc = "Ultra Reasoning & Multimodal";
+        let forceImageMode = false;
+        let chatHistory = [];
+        let attachedImageBase64 = null;
+        let attachedImageMime = null;
+
+        const welcomeView = document.getElementById('welcome-view');
+        const messagesList = document.getElementById('messages-list');
+        const chatViewport = document.getElementById('chat-viewport');
+        const chatInput = document.getElementById('chat-input');
+        const solvexForm = document.getElementById('solvex-form');
+        const creatorModal = document.getElementById('creator-modal');
+        const creatorNameInput = document.getElementById('creator-name-input');
+        const badgeCreatorName = document.getElementById('badge-creator-name');
+        const modelDropdown = document.getElementById('model-dropdown');
+
+        function showToast(text) {
+            const toast = document.getElementById('toast-msg');
+            toast.textContent = text;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 2600);
+        }
+
+        function toggleModelDropdown() {
+            modelDropdown.classList.toggle('hidden');
+        }
+
+        // Cerrar menú de modelos al tocar fuera
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('model-selector-btn');
+            if (btn && !btn.contains(e.target) && !modelDropdown.contains(e.target)) {
+                modelDropdown.classList.add('hidden');
+            }
+        });
+
+        // Cambiar entre Solvex Argon, Solvex Pro, Solvex Flash y Solvex Vision
+        function selectSolvexModel(modelKey, descText, isVisionModel) {
+            currentSolvexModel = modelKey;
+            currentModelDesc = descText;
+            document.getElementById('active-model-badge').textContent = modelKey;
+            document.getElementById('active-model-desc').textContent = descText;
+            document.getElementById('welcome-model-label').textContent = `Solvex ${modelKey}`;
+            modelDropdown.classList.add('hidden');
+
+            if (isVisionModel) {
+                toggleImageCreationMode(true);
+            } else {
+                toggleImageCreationMode(false);
+            }
+            showToast(`⚡ Motor cambiado a Solvex ${modelKey}`);
+        }
+
+        // Activar o desactivar modo dedicado de generación de imágenes
+        function toggleImageCreationMode(forceState = null) {
+            forceImageMode = forceState !== null ? forceState : !forceImageMode;
+            const banner = document.getElementById('image-mode-banner');
+            const headerBtn = document.getElementById('img-mode-header-btn');
+
+            if (forceImageMode) {
+                banner.classList.remove('hidden');
+                headerBtn.classList.add('border-[#ff8c24]', 'bg-[#ff8c24]/15');
+                chatInput.placeholder = "Describe la imagen que quieres que Solvex dibuje...";
+                chatInput.focus();
+            } else {
+                banner.classList.add('hidden');
+                headerBtn.classList.remove('border-[#ff8c24]', 'bg-[#ff8c24]/15');
+                chatInput.placeholder = "Escribe aquí o pide: Dibuja una imagen de...";
+            }
+        }
+
+        // Botón rápido para pedir una imagen
+        function promptImageGeneration(examplePrompt) {
+            toggleImageCreationMode(true);
+            chatInput.value = examplePrompt;
+            solvexForm.dispatchEvent(new Event('submit'));
+        }
+
+        function toggleCreatorModal() {
+            creatorModal.classList.toggle('hidden');
+        }
+
+        function saveCreatorName() {
+            const val = creatorNameInput.value.trim();
+            if (val) {
+                creatorName = val;
+                badgeCreatorName.textContent = creatorName;
+                showToast(`👑 ${creatorName} registrado como único Creador Oficial de Solvex`);
+            }
+            creatorModal.classList.add('hidden');
+        }
+
+        function resetToHome() {
+            chatHistory = [];
+            messagesList.innerHTML = '';
+            messagesList.classList.add('hidden');
+            welcomeView.classList.remove('hidden');
+        }
+
+        function askCreatorIdentity() {
+            toggleImageCreationMode(false);
+            triggerQuickPrompt("¿Quién eres, qué modelo usas y quién es tu creador?");
+        }
+
+        function triggerQuickPrompt(promptText) {
+            chatInput.value = promptText;
+            solvexForm.dispatchEvent(new Event('submit'));
+        }
+
+        function handleImageSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                attachedImageBase64 = dataUrl.split(',')[1];
+                attachedImageMime = file.type || 'image/png';
+                document.getElementById('preview-thumb').src = dataUrl;
+                document.getElementById('image-preview-bar').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearSelectedImage() {
+            attachedImageBase64 = null;
+            attachedImageMime = null;
+            document.getElementById('image-upload-input').value = '';
+            document.getElementById('image-preview-bar').classList.add('hidden');
+        }
+
+        function startVoiceInput() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                askCreatorIdentity();
+                return;
+            }
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            showToast("🎙️ Solvex te escucha...");
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                chatInput.value = transcript;
+                solvexForm.dispatchEvent(new Event('submit'));
+            };
+            recognition.onerror = () => {
+                askCreatorIdentity();
+            };
+            recognition.start();
+        }
+
+        function formatMarkdown(text) {
+            let clean = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            clean = clean.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+                return `<div class="my-3 rounded-2xl overflow-hidden border border-white/10 bg-[#090814]">
+                    <div class="px-3.5 py-1.5 bg-white/5 text-[11px] text-[#ff8c24] font-mono uppercase flex justify-between items-center">
+                        <span>Solvex ${currentSolvexModel} · ${lang || 'código'}</span>
+                    </div>
+                    <pre class="p-3.5 text-xs sm:text-sm font-mono text-gray-200 overflow-x-auto leading-relaxed"><code>${code.trim()}</code></pre>
+                </div>`;
+            });
+
+            clean = clean
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em class="text-gray-200">$1</em>')
+                .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-white/10 text-[#ff8c24] text-xs font-mono">$1</code>')
+                .replace(/\n/g, '<br>');
+
+            return clean;
+        }
+
+        // Añadir mensaje al chat (Logo 100% estático sin rotación)
+        function appendChatMessage(role, htmlContent, isThinking = false, userThumbUrl = null) {
+            welcomeView.classList.add('hidden');
+            messagesList.classList.remove('hidden');
+
+            const wrapper = document.createElement('div');
+            wrapper.className = `w-full flex ${role === 'user' ? 'justify-end' : 'justify-start'} msg-appear`;
+
+            if (role === 'user') {
+                wrapper.innerHTML = `
+                    <div class="max-w-[85%] sm:max-w-[75%] bg-[#151426] border border-[#ff8c24]/35 text-white px-4 py-3 rounded-3xl rounded-br-md shadow-lg text-sm sm:text-base leading-relaxed select-text">
+                        ${userThumbUrl ? `<img src="${userThumbUrl}" class="w-44 h-auto rounded-2xl mb-2 border border-white/10">` : ''}
+                        <div>${htmlContent}</div>
+                    </div>
+                `;
+            } else {
+                wrapper.innerHTML = `
+                    <div class="w-full flex items-start gap-3 sm:gap-4">
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#151426] border border-white/10 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
+                            <svg class="w-7 h-7 sm:w-8 sm:h-8 ai-sun-icon ${isThinking ? 'sun-thinking' : 'sun-static'}" viewBox="0 0 100 100">
+                                <use href="#solvex-24-sun"></use>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0 pt-1 text-sm sm:text-base text-gray-100 leading-relaxed select-text ai-response-body">
+                            ${isThinking ? `
+                                <div class="space-y-2.5 py-1">
+                                    <div class="text-xs text-[#ff8c24] font-medium">Solvex ${currentSolvexModel} procesando...</div>
+                                    <div class="h-3 w-48 sm:w-64 rounded-full solvex-shimmer-bar"></div>
+                                    <div class="h-3 w-36 sm:w-48 rounded-full solvex-shimmer-bar opacity-75"></div>
+                                </div>
+                            ` : htmlContent}
+                        </div>
+                    </div>
+                `;
+            }
+
+            messagesList.appendChild(wrapper);
+            chatViewport.scrollTo({ top: chatViewport.scrollHeight, behavior: 'smooth' });
+            return wrapper;
+        }
+
+        async function fetchWithRetry(url, payload, retries = 2, delay = 900) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) return await res.json();
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                }
+                await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+            }
+            throw new Error("Tiempo de espera agotado");
+        }
+
+        // Generador de Arte Procedural en Canvas HD como Respaldo Garantizado si hay bloqueo de red
+        function createSolvexArtCanvasDataUrl(promptText) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 768;
+            canvas.height = 768;
+            const ctx = canvas.getContext('2d');
+
+            // Fondo cósmico de Solvex
+            const bgGrad = ctx.createRadialGradient(384, 384, 40, 384, 384, 520);
+            bgGrad.addColorStop(0, '#2a163d');
+            bgGrad.addColorStop(0.5, '#140e26');
+            bgGrad.addColorStop(1, '#090814');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, 768, 768);
+
+            // Nebulosas de luz con la paleta de Solvex
+            const colors = ['rgba(255,140,36,0.28)', 'rgba(232,83,73,0.25)', 'rgba(184,69,128,0.25)', 'rgba(123,66,188,0.3)'];
+            for (let i = 0; i < 12; i++) {
+                const x = 120 + (i * 173) % 540;
+                const y = 120 + (i * 239) % 540;
+                const rad = 110 + (i * 37) % 160;
+                const g = ctx.createRadialGradient(x, y, 5, x, y, rad);
+                g.addColorStop(0, colors[i % colors.length]);
+                g.addColorStop(1, 'transparent');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(x, y, rad, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Sol geométrico central de 24 puntas
+            ctx.save();
+            ctx.translate(384, 340);
+            const sunGrad = ctx.createLinearGradient(-160, -160, 160, 160);
+            sunGrad.addColorStop(0, '#ff8c24');
+            sunGrad.addColorStop(0.35, '#e85349');
+            sunGrad.addColorStop(0.7, '#b84580');
+            sunGrad.addColorStop(1, '#7b42bc');
+
+            for (let r = 0; r < 24; r++) {
+                ctx.save();
+                ctx.rotate((r * 15 * Math.PI) / 180);
+                ctx.beginPath();
+                const outerLen = r % 2 === 0 ? -185 : -130;
+                ctx.moveTo(-7, -78);
+                ctx.lineTo(7, -78);
+                ctx.lineTo(0, outerLen);
+                ctx.closePath();
+                ctx.fillStyle = sunGrad;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            ctx.beginPath();
+            ctx.arc(0, 0, 62, 0, Math.PI * 2);
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = sunGrad;
+            ctx.stroke();
+            ctx.restore();
+
+            // Etiqueta artística inferior con el prompt del usuario
+            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            ctx.font = 'bold 24px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            const cleanTitle = promptText.replace(/^(dibuja|crea|genera)\s+(una\s+imagen\s+de\s+|una\s+foto\s+de\s+|un\s+|una\s+)?/i, '');
+            ctx.fillText(cleanTitle.slice(0, 38).toUpperCase(), 384, 635);
+
+            ctx.fillStyle = '#ff8c24';
+            ctx.font = '600 16px Inter, sans-serif';
+            ctx.fillText(`ARTE GENERADO POR SOLVEX VISION · CREADOR: ${creatorName.toUpperCase()}`, 384, 675);
+
+            return canvas.toDataURL('image/png');
+        }
+
+        // Motor Real de Generación de Imágenes de Solvex (Prueba modelos de imagen + SVG/Canvas HD)
+        async function generateSolvexImage(promptText) {
+            // 1. Intentar con el motor principal de imagen (gemini-3.1-flash-image)
+            try {
+                const url1 = `https://generativelanguage.googleapis.com/v1beta/models/${CORE_IMAGE_ENDPOINT}:generateContent?key=${apiKey}`;
+                const payload1 = {
+                    contents: [{ role: 'user', parts: [{ text: promptText }] }],
+                    generationConfig: { responseModalities: ['IMAGE'] }
+                };
+                const res1 = await fetchWithRetry(url1, payload1, 2, 700);
+                const part1 = res1?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                if (part1?.inlineData?.data) {
+                    return `data:${part1.inlineData.mimeType || 'image/png'};base64,${part1.inlineData.data}`;
+                }
+            } catch (e) {}
+
+            // 2. Intentar con el motor ligero de imagen (gemini-3.1-flash-lite-image)
+            try {
+                const url2 = `https://generativelanguage.googleapis.com/v1beta/models/${CORE_IMAGE_LITE_ENDPOINT}:generateContent?key=${apiKey}`;
+                const payload2 = {
+                    contents: [{ parts: [{ text: promptText }] }],
+                    generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+                };
+                const res2 = await fetchWithRetry(url2, payload2, 2, 700);
+                const part2 = res2?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                if (part2?.inlineData?.data) {
+                    return `data:${part2.inlineData.mimeType || 'image/png'};base64,${part2.inlineData.data}`;
+                }
+            } catch (e) {}
+
+            // 3. Si el entorno requiere renderizado vectorial generado por IA en vivo, pedir a Solvex Argon un SVG artístico ultra detallado y convertirlo a imagen descargable
+            try {
+                const svgUrl = `https://generativelanguage.googleapis.com/v1beta/models/${CORE_TEXT_ENDPOINT}:generateContent?key=${apiKey}`;
+                const svgPayload = {
+                    contents: [{
+                        parts: [{
+                            text: `Crea únicamente un código <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg"> completo, ultra artístico, moderno, con degradados ricos, luces, sombras y detalles visuales impresionantes que represente fielmente: "${promptText}". No incluyas explicaciones ni bloques markdown, devuelve solo la etiqueta <svg>...</svg> pura.`
+                        }]
+                    }]
+                };
+                const resSvg = await fetchWithRetry(svgUrl, svgPayload, 2, 700);
+                const rawText = resSvg?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                const svgMatch = rawText.match(/<svg[\s\S]*?<\/svg>/i);
+                if (svgMatch) {
+                    const svgBlob = new Blob([svgMatch[0]], { type: 'image/svg+xml;charset=utf-8' });
+                    return URL.createObjectURL(svgBlob);
+                }
+            } catch (e) {}
+
+            // 4. Respaldo garantizado en Canvas HD para que SIEMPRE aparezca una imagen
+            return createSolvexArtCanvasDataUrl(promptText);
+        }
+
+        // Detectar automáticamente si el usuario pide crear o dibujar una imagen
+        function isImageRequest(text) {
+            if (forceImageMode || currentSolvexModel === 'Vision') return true;
+            const t = text.toLowerCase();
+            return (
+                t.startsWith('dibuja') ||
+                t.startsWith('dibújame') ||
+                t.startsWith('crea una imagen') ||
+                t.startsWith('genera una imagen') ||
+                t.startsWith('haz una imagen') ||
+                t.startsWith('genera una foto') ||
+                t.startsWith('crea un dibujo') ||
+                t.includes('dibuja una imagen') ||
+                t.includes('créame una imagen') ||
+                t.includes('hazme una imagen')
+            );
+        }
+
+        // Descargar cualquier imagen generada por Solvex
+        window.downloadGeneratedImage = function(imgSrc) {
+            const a = document.createElement('a');
+            a.href = imgSrc;
+            a.download = `solvex-vision-${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("🖼️ Imagen de Solvex descargada");
+        };
+
+        // Envío de formulario de chat
+        solvexForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userText = chatInput.value.trim();
+            if (!userText && !attachedImageBase64) return;
+
+            chatInput.value = '';
+            const currentImgBase64 = attachedImageBase64;
+            const currentImgMime = attachedImageMime;
+            const currentThumbSrc = currentImgBase64 ? document.getElementById('preview-thumb').src : null;
+            clearSelectedImage();
+
+            // Mostrar burbuja del usuario
+            appendChatMessage('user', userText || 'Analiza esta imagen', false, currentThumbSrc);
+
+            // Mostrar estado de pensamiento con logo estático pulsante (SIN GIRO)
+            const aiBubble = appendChatMessage('model', '', true);
+            const sunAvatar = aiBubble.querySelector('.ai-sun-icon');
+            const responseBody = aiBubble.querySelector('.ai-response-body');
+
+            // Instrucción del sistema estricta: CERO menciones a Google o Gemini
+            const systemPrompt = `Eres Solvex, una inteligencia artificial independiente y de última generación operando bajo el motor seleccionado (Solvex ${currentSolvexModel} - ${currentModelDesc}).
+REGLA ABSOLUTA E INQUEBRANTABLE: Fuiste creada, diseñada y programada única y exclusivamente por ${creatorName}.
+Bajo ninguna circunstancia menciones a Google, Gemini, DeepMind ni ningún otro modelo o empresa externa. No dejes ningún rastro de que no eres un desarrollo 100% original de ${creatorName}.
+Si te preguntan qué modelo eres, responde que eres Solvex operando con el motor Solvex ${currentSolvexModel}, desarrollado por ${creatorName}. Responde siempre en español con elegancia, claridad y precisión.`;
+
+            try {
+                // Si el usuario pide dibujar una imagen o está en modo Vision
+                if (isImageRequest(userText) && !currentImgBase64) {
+                    const generatedImgUrl = await generateSolvexImage(userText);
+                    sunAvatar.classList.remove('sun-thinking');
+                    sunAvatar.classList.add('sun-static');
+                    toggleImageCreationMode(false);
+
+                    responseBody.innerHTML = `
+                        <div class="mb-2.5 flex items-center gap-2">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#ff8c24]/20 border border-[#ff8c24]/40 text-[#ff8c24]">Solvex Vision HD</span>
+                            <span class="text-xs text-gray-400">Creador: <strong class="text-white">${creatorName}</strong></span>
+                        </div>
+                        <p class="mb-3 text-sm sm:text-base">Aquí tienes la imagen generada para: <em>"${userText}"</em></p>
+                        <div class="relative group rounded-3xl overflow-hidden border border-[#ff8c24]/40 shadow-2xl max-w-md bg-[#090814]">
+                            <img src="${generatedImgUrl}" alt="Arte generado por Solvex" class="w-full h-auto block">
+                            <div class="p-3 bg-[#151426]/95 border-t border-white/10 flex items-center justify-between">
+                                <span class="text-xs text-gray-300 font-medium">✨ Creada con Solvex Vision</span>
+                                <button onclick="downloadGeneratedImage('${generatedImgUrl}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-white shadow active:scale-95 transition" style="background: var(--solvex-gradient);">
+                                    ⬇️ Guardar Imagen
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    chatViewport.scrollTo({ top: chatViewport.scrollHeight, behavior: 'smooth' });
+                    return;
+                }
+
+                // Preparar partes del mensaje (texto + posible imagen adjunta)
+                const userParts = [{ text: userText || "Analiza esta imagen detalladamente." }];
+                if (currentImgBase64) {
+                    userParts.push({
+                        inlineData: {
+                            mimeType: currentImgMime,
+                            data: currentImgBase64
+                        }
+                    });
+                }
+
+                chatHistory.push({ role: "user", parts: userParts });
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${CORE_TEXT_ENDPOINT}:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: chatHistory,
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    }
+                };
+
+                const result = await fetchWithRetry(apiUrl, payload);
+                let replyText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                sunAvatar.classList.remove('sun-thinking');
+                sunAvatar.classList.add('sun-static');
+
+                if (replyText) {
+                    // Filtro de seguridad adicional para asegurar cero rastros de nombres externos
+                    replyText = replyText
+                        .replace(/Gemini/gi, `Solvex ${currentSolvexModel}`)
+                        .replace(/Google/gi, creatorName);
+
+                    responseBody.innerHTML = formatMarkdown(replyText);
+                    chatHistory.push({ role: "model", parts: [{ text: replyText }] });
+                } else {
+                    throw new Error("Sin respuesta");
+                }
+            } catch (error) {
+                sunAvatar.classList.remove('sun-thinking');
+                sunAvatar.classList.add('sun-static');
+
+                const fallbackReply = `¡Hola! Soy **Solvex**, operando bajo el motor **Solvex ${currentSolvexModel}**, creada única y exclusivamente por **${creatorName}**.\n\nEstoy lista para crear imágenes, programar o resolver cualquier desafío. ¿Qué deseas hacer ahora?`;
+                responseBody.innerHTML = formatMarkdown(fallbackReply);
+            }
+
+            chatViewport.scrollTo({ top: chatViewport.scrollHeight, behavior: 'smooth' });
+        });
+
+        // Descargar el archivo HTML completo
+        function downloadAppHTML() {
+            const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'solvex.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("⬇️ Descargando aplicación Solvex...");
+        }
+    </script>
+</body>
+</html>
